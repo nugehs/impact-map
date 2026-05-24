@@ -29,6 +29,10 @@ def render_markdown(result: AnalysisResult) -> str:
         lines.append(f"{index}. {step}")
     lines.append("")
 
+    if result.validation:
+        lines.extend(_render_validation(result.validation))
+        lines.append("")
+
     lines.append("## Likely Impacted Files")
     if not result.top_files:
         lines.append("No strong file matches found.")
@@ -78,8 +82,49 @@ def render_json(result: AnalysisResult) -> str:
         "test_suggestions": result.test_suggestions,
         "implementation_plan": result.implementation_plan,
         "risks": result.risks,
+        "validation": _validation_json(result.validation) if result.validation else None,
     }
     return json.dumps(data, indent=2)
+
+
+def _render_validation(validation) -> list[str]:
+    lines = [
+        "## Impact Validation",
+        f"- Base: `{validation.base}`",
+        f"- Verdict: `{validation.verdict}`",
+        f"- Changed files found: {len(validation.changed_files)}",
+    ]
+    if validation.confirmed_direct:
+        lines.append("- Confirmed direct impact:")
+        lines.extend(f"  - `{path}`" for path in validation.confirmed_direct[:12])
+    if validation.confirmed_related:
+        lines.append("- Confirmed related impact:")
+        lines.extend(f"  - `{path}`" for path in validation.confirmed_related[:12])
+    if validation.unconfirmed_candidates:
+        lines.append("- Not directly confirmed by this diff:")
+        lines.extend(f"  - `{path}`" for path in validation.unconfirmed_candidates[:12])
+    if validation.missed_changed_files:
+        lines.append("- Changed outside predicted/related impact:")
+        lines.extend(f"  - `{path}`" for path in validation.missed_changed_files[:12])
+    if validation.notes:
+        lines.append("- Notes:")
+        lines.extend(f"  - {note}" for note in validation.notes)
+    return lines
+
+
+def _validation_json(validation) -> dict | None:
+    if validation is None:
+        return None
+    return {
+        "base": validation.base,
+        "changed_files": validation.changed_files,
+        "confirmed_direct": validation.confirmed_direct,
+        "confirmed_related": validation.confirmed_related,
+        "unconfirmed_candidates": validation.unconfirmed_candidates,
+        "missed_changed_files": validation.missed_changed_files,
+        "verdict": validation.verdict,
+        "notes": validation.notes,
+    }
 
 
 def _render_file_score(index: int, item: FileScore) -> list[str]:

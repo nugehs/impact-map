@@ -5,15 +5,23 @@ from pathlib import Path
 from .models import AnalysisResult
 from .scanner import RepoScanner
 from .scoring import build_plan, identify_risks, score_files, suggest_tests
+from .validation import validate_against_diff
 
 
-def analyze(repo: Path, request: str, top_n: int = 10, max_files: int = 5000) -> AnalysisResult:
+def analyze(
+    repo: Path,
+    request: str,
+    top_n: int = 10,
+    max_files: int = 5000,
+    diff_base: str | None = None,
+) -> AnalysisResult:
     scanner = RepoScanner(repo, max_files=max_files)
     profile, files = scanner.scan()
     top_files = score_files(files, request, top_n=top_n)
     tests = suggest_tests(files, top_files, profile.package_scripts)
     plan = build_plan(request, top_files)
     risks = identify_risks(request, top_files)
+    validation = validate_against_diff(profile.root, diff_base, top_files) if diff_base else None
     return AnalysisResult(
         request=request,
         profile=profile,
@@ -21,5 +29,5 @@ def analyze(repo: Path, request: str, top_n: int = 10, max_files: int = 5000) ->
         test_suggestions=tests,
         implementation_plan=plan,
         risks=risks,
+        validation=validation,
     )
-

@@ -44,6 +44,7 @@ cia /path/to/repo "fix auth redirect after login" --top 12
 cia /path/to/repo "add CSV export for invoices" --json
 cia /path/to/repo "update booking cancellation policy" --max-files 3000
 impact-map /path/to/repo "improve camera zoom with pinch and hold controls" --top 12
+impact-map /path/to/repo "improve camera zoom with pinch and hold controls" --diff-base HEAD
 ```
 
 ## Codex MCP
@@ -66,7 +67,24 @@ Tool arguments:
 - `request`: plain-English code change request
 - `top`: optional number of files to return
 - `max_files`: optional scan limit
+- `diff_base`: optional git ref for validating the prediction against changed files
 - `json`: optional machine-readable output mode
+
+## Validating Impact
+
+Impact predictions are candidates until there is a diff to compare against. Use `--diff-base` to classify the prediction against actual changed files:
+
+```bash
+impact-map /path/to/repo "fix auth redirect after login" --diff-base HEAD
+impact-map /path/to/repo "add Stripe refunds to bookings" --diff-base origin/main
+```
+
+Validation labels:
+
+- `confirmed_direct`: a predicted file was changed
+- `confirmed_related`: a changed file was related to a predicted file
+- `unconfirmed_candidates`: predicted files that were not changed directly
+- `missed_changed_files`: changed files outside the predicted and related set
 
 ## How it works
 

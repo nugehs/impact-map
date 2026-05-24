@@ -36,6 +36,18 @@ class ProjectProfile:
 
 
 @dataclass
+class ImpactValidation:
+    base: str
+    changed_files: list[str]
+    confirmed_direct: list[str]
+    confirmed_related: list[str]
+    unconfirmed_candidates: list[str]
+    missed_changed_files: list[str]
+    verdict: str
+    notes: list[str] = field(default_factory=list)
+
+
+@dataclass
 class AnalysisResult:
     request: str
     profile: ProjectProfile
@@ -43,4 +55,4 @@ class AnalysisResult:
     test_suggestions: list[str]
     implementation_plan: list[str]
     risks: list[str]
-
+    validation: ImpactValidation | None = None

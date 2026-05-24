@@ -17,6 +17,10 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("request", help="Plain-English change request.")
     parser.add_argument("--top", type=int, default=10, help="Number of impacted files to show.")
     parser.add_argument("--max-files", type=int, default=5000, help="Maximum source-like files to scan.")
+    parser.add_argument(
+        "--diff-base",
+        help="Validate the predicted impact against git changes from this base ref, for example HEAD or origin/main.",
+    )
     parser.add_argument("--json", action="store_true", help="Render machine-readable JSON instead of Markdown.")
     return parser
 
@@ -31,7 +35,7 @@ def main(argv: list[str] | None = None) -> int:
         parser.error("--max-files must be at least 1")
 
     try:
-        result = analyze(args.repo, args.request, top_n=args.top, max_files=args.max_files)
+        result = analyze(args.repo, args.request, top_n=args.top, max_files=args.max_files, diff_base=args.diff_base)
     except Exception as exc:
         print(f"cia: {exc}", file=sys.stderr)
         return 1
@@ -45,4 +49,3 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

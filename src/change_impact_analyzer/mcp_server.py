@@ -87,10 +87,19 @@ class McpServer:
 
         top = _int_arg(args.get("top"), default=10, minimum=1, maximum=50)
         max_files = _int_arg(args.get("max_files"), default=5000, minimum=1, maximum=50_000)
+        diff_base = args.get("diff_base")
+        if diff_base is not None and not isinstance(diff_base, str):
+            return self._tool_error(request_id, "`diff_base` must be a git ref string when provided.")
         as_json = bool(args.get("json", False))
 
         try:
-            result = analyze(Path(repo).expanduser(), request, top_n=top, max_files=max_files)
+            result = analyze(
+                Path(repo).expanduser(),
+                request,
+                top_n=top,
+                max_files=max_files,
+                diff_base=diff_base,
+            )
             text = render_json(result) if as_json else render_markdown(result)
         except Exception as exc:
             return self._tool_error(request_id, str(exc))
@@ -196,6 +205,10 @@ def tool_definition() -> dict[str, Any]:
                     "type": "boolean",
                     "description": "Return JSON instead of Markdown.",
                     "default": False,
+                },
+                "diff_base": {
+                    "type": "string",
+                    "description": "Optional git ref for validating predicted impact against changed files, such as HEAD or origin/main.",
                 },
             },
             "required": ["repo", "request"],
