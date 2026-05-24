@@ -13,7 +13,7 @@ dependencies = []
 
 [project.scripts]
 cia = "change_impact_analyzer.cli:main"
+impact-map-mcp = "change_impact_analyzer.mcp_server:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
-

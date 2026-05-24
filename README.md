@@ -39,6 +39,28 @@ cia /path/to/repo "add CSV export for invoices" --json
 cia /path/to/repo "update booking cancellation policy" --max-files 3000
 ```
 
+## Codex MCP
+
+`impact-map` can also run as a local stdio MCP server:
+
+```bash
+PYTHONPATH=src python3 -m change_impact_analyzer.mcp_server
+```
+
+It exposes one tool:
+
+```text
+analyze_change_impact
+```
+
+Tool arguments:
+
+- `repo`: local repository path
+- `request`: plain-English code change request
+- `top`: optional number of files to return
+- `max_files`: optional scan limit
+- `json`: optional machine-readable output mode
+
 ## How it works
 
 The analyzer:
