@@ -30,6 +30,30 @@ CONFIG_HINTS = {
     "auth": ["auth", "session", "middleware"],
 }
 
+TEST_MATCH_STOP_TERMS = {
+    "app",
+    "backend",
+    "component",
+    "components",
+    "frontend",
+    "helper",
+    "helpers",
+    "hook",
+    "hooks",
+    "index",
+    "lib",
+    "screen",
+    "service",
+    "services",
+    "src",
+    "test",
+    "tests",
+    "types",
+    "ui",
+    "util",
+    "utils",
+}
+
 
 def score_files(files: list[SourceFile], request: str, top_n: int) -> list[FileScore]:
     query = weighted_query_terms(request)
@@ -75,10 +99,13 @@ def suggest_tests(files: list[SourceFile], top_files: list[FileScore], package_s
     for scored in top_files:
         top_terms.update(tokenize(scored.file.relative_path))
         top_terms.update(tokenize(" ".join(scored.file.symbols[:20])))
+    top_terms = {term for term in top_terms if term not in TEST_MATCH_STOP_TERMS and len(term) > 2}
 
     matched_tests: list[tuple[int, SourceFile]] = []
     for test in test_files:
-        test_terms = set(tokenize(test.relative_path))
+        test_terms = {
+            term for term in tokenize(test.relative_path) if term not in TEST_MATCH_STOP_TERMS and len(term) > 2
+        }
         overlap = len(top_terms & test_terms)
         if overlap:
             matched_tests.append((overlap, test))
@@ -105,18 +132,30 @@ def build_plan(request: str, top_files: list[FileScore]) -> list[str]:
             "Add or update a focused test before changing behavior.",
         ]
 
-    primary = top_files[0].file.relative_path
-    plan = [
-        f"Start with `{primary}` because it has the strongest path/content match.",
-        "Read the neighboring imports and callers before editing to understand the local pattern.",
-        "Trace data shape changes across route handlers, services, models, and UI consumers if any appear in the top files.",
-        "Update or add the closest matching test before broad refactors.",
-        "Run the suggested focused tests, then the repo's broader test/lint command if available.",
+    implementation_files = [
+        score
+        for score in top_files
+        if not score.file.is_test and score.file.extension not in {".md", ".mdx", ".rst"}
     ]
+    primary_score = implementation_files[0] if implementation_files else top_files[0]
+    primary = primary_score.file.relative_path
+    supporting = [score.file.relative_path for score in implementation_files[1:4]]
+
+    plan = [
+        f"Open `{primary}` first and decide whether it owns the requested behavior or only calls into another file.",
+        "Follow its imports/callers into the related files before editing so the change lands at the owner, not just the highest-ranked match.",
+        "Make the smallest implementation change in the owner file, then adjust supporting UI/hooks/services only if the first edit requires it.",
+        "Use the ranked list as a checklist: edit primary owner, inspect supporting files for side effects, ignore files whose action says conditional-only.",
+        "Run or add the closest focused test, then run the repo's broader test/lint command if available.",
+    ]
+    if supporting:
+        plan.insert(1, f"Keep these supporting files open while tracing side effects: {', '.join(f'`{path}`' for path in supporting)}.")
     if any(score.file.routes for score in top_files):
         plan.insert(2, "Check the matched routes for request/response contracts and downstream consumers.")
     if any("schema" in score.file.relative_path.lower() or score.file.extension == ".sql" for score in top_files):
         plan.insert(2, "Review schema or migration impact before changing application code.")
+    if _looks_like_ui_change(request, top_files):
+        plan.insert(2, "For UI interaction work, verify gesture/tap/keyboard layering and check that nearby overlays still receive input correctly.")
     return plan
 
 
@@ -219,6 +258,15 @@ def _query_wants_tests(query: Counter[str]) -> bool:
 
 def _query_wants_docs(query: Counter[str]) -> bool:
     return bool(set(query).intersection({"doc", "docs", "documentation", "readme", "changelog"}))
+
+
+def _looks_like_ui_change(request: str, top_files: list[FileScore]) -> bool:
+    terms = set(tokenize(request))
+    paths = " ".join(score.file.relative_path.lower() for score in top_files)
+    return bool(
+        terms.intersection({"ui", "screen", "button", "control", "gesture", "pinch", "tap", "layout", "style"})
+        or any(part in paths for part in ("component", ".tsx", "screen", "page", "view"))
+    )
 
 
 def _dependency_boosts(

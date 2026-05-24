@@ -2,7 +2,7 @@ from pathlib import Path
 import unittest
 
 from change_impact_analyzer.models import SourceFile
-from change_impact_analyzer.scoring import score_files
+from change_impact_analyzer.scoring import score_files, suggest_tests
 
 
 class ScoringTests(unittest.TestCase):
@@ -30,6 +30,31 @@ class ScoringTests(unittest.TestCase):
 
         self.assertEqual(ranked[0].file.relative_path, "src/bookings/refunds.ts")
         self.assertEqual(len(ranked), 1)
+
+    def test_suggest_tests_ignores_generic_path_terms(self):
+        files = [
+            SourceFile(
+                path=Path("/repo/src/components/camera/CameraControls.tsx"),
+                relative_path="src/components/camera/CameraControls.tsx",
+                extension=".tsx",
+                text="",
+                line_count=1,
+                symbols=("CameraControls", "camera", "controls"),
+            ),
+            SourceFile(
+                path=Path("/repo/src/services/auth/__tests__/auth.test.ts"),
+                relative_path="src/services/auth/__tests__/auth.test.ts",
+                extension=".ts",
+                text="",
+                line_count=1,
+                is_test=True,
+            ),
+        ]
+        top_files = score_files(files, "improve camera zoom controls", top_n=1)
+
+        suggestions = suggest_tests(files, top_files, {"test": "jest"})
+
+        self.assertEqual(suggestions, ["Run package script `test`: jest"])
 
 
 if __name__ == "__main__":
