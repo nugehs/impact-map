@@ -25,6 +25,12 @@ Then run:
 cia /path/to/repo "add Stripe refunds to bookings"
 ```
 
+Or use the longer command name:
+
+```bash
+impact-map /path/to/repo "add Stripe refunds to bookings"
+```
+
 You can also run without installing:
 
 ```bash
@@ -37,6 +43,7 @@ PYTHONPATH=src python3 -m change_impact_analyzer.cli /path/to/repo "add Stripe r
 cia /path/to/repo "fix auth redirect after login" --top 12
 cia /path/to/repo "add CSV export for invoices" --json
 cia /path/to/repo "update booking cancellation policy" --max-files 3000
+impact-map /path/to/repo "improve camera zoom with pinch and hold controls" --top 12
 ```
 
 ## Codex MCP

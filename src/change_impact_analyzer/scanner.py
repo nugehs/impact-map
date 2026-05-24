@@ -10,19 +10,24 @@ from .models import ProjectProfile, SourceFile
 
 SKIP_DIRS = {
     ".cache",
+    ".gradle",
     ".git",
     ".hg",
     ".mypy_cache",
     ".next",
+    ".eas",
+    ".expo",
     ".pytest_cache",
     ".ruff_cache",
     ".svn",
     ".turbo",
     ".venv",
+    ".worktrees",
     "build",
     "coverage",
     "dist",
     "node_modules",
+    "Pods",
     "target",
     "vendor",
     "venv",
@@ -219,4 +224,3 @@ class RepoScanner:
         if isinstance(scripts, dict):
             return {str(key): str(value) for key, value in scripts.items()}
         return {}
-

@@ -10,7 +10,7 @@ from .text import tokenize, weighted_query_terms
 
 
 RISK_KEYWORDS = {
-    "auth": ["auth", "login", "logout", "session", "permission", "role", "jwt", "oauth"],
+    "auth": ["auth", "login", "logout", "session", "role", "jwt", "oauth"],
     "payments": ["payment", "stripe", "refund", "checkout", "invoice", "subscription", "billing"],
     "database": ["database", "schema", "migration", "prisma", "sql"],
     "api contracts": ["api", "route", "endpoint", "dto", "schema", "response", "request"],

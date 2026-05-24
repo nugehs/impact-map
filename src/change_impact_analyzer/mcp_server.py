@@ -12,6 +12,7 @@ from .report import render_json, render_markdown
 
 SERVER_NAME = "impact-map"
 TOOL_NAME = "analyze_change_impact"
+PROTOCOL_VERSION = "2025-06-18"
 
 
 def main() -> int:
@@ -21,6 +22,9 @@ def main() -> int:
 
 
 class McpServer:
+    def __init__(self) -> None:
+        self._transport = "jsonl"
+
     def run(self) -> None:
         while True:
             message = self._read_message()
@@ -38,8 +42,8 @@ class McpServer:
             return self._result(
                 request_id,
                 {
-                    "protocolVersion": message.get("params", {}).get("protocolVersion", "2024-11-05"),
-                    "capabilities": {"tools": {}},
+                    "protocolVersion": PROTOCOL_VERSION,
+                    "capabilities": {"tools": {"listChanged": False}},
                     "serverInfo": {"name": SERVER_NAME, "version": __version__},
                 },
             )
@@ -101,6 +105,19 @@ class McpServer:
 
     def _read_message(self) -> dict[str, Any] | None:
         headers: dict[str, str] = {}
+        first_line = sys.stdin.buffer.readline()
+        if not first_line:
+            return None
+
+        stripped = first_line.strip()
+        if stripped.startswith(b"{"):
+            self._transport = "jsonl"
+            return json.loads(stripped.decode("utf-8"))
+
+        self._transport = "headers"
+        key, _, value = first_line.decode("ascii").partition(":")
+        headers[key.lower()] = value.strip()
+
         while True:
             line = sys.stdin.buffer.readline()
             if not line:
@@ -119,8 +136,11 @@ class McpServer:
 
     def _write_message(self, message: dict[str, Any]) -> None:
         payload = json.dumps(message, separators=(",", ":")).encode("utf-8")
-        sys.stdout.buffer.write(f"Content-Length: {len(payload)}\r\n\r\n".encode("ascii"))
-        sys.stdout.buffer.write(payload)
+        if self._transport == "headers":
+            sys.stdout.buffer.write(f"Content-Length: {len(payload)}\r\n\r\n".encode("ascii"))
+            sys.stdout.buffer.write(payload)
+        else:
+            sys.stdout.buffer.write(payload + b"\n")
         sys.stdout.buffer.flush()
 
     def _result(self, request_id: Any, result: dict[str, Any]) -> dict[str, Any]:
@@ -142,6 +162,7 @@ class McpServer:
 def tool_definition() -> dict[str, Any]:
     return {
         "name": TOOL_NAME,
+        "title": "Analyze Change Impact",
         "description": (
             "Analyze a local repository for a requested code change and return likely impacted files, "
             "test suggestions, implementation steps, and risk checks."
@@ -195,4 +216,3 @@ def _int_arg(value: Any, default: int, minimum: int, maximum: int) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
