@@ -1,0 +1,6 @@
+{
+  "name": "sample-mobile-app",
+  "scripts": {
+    "test": "jest"
+  }
+}

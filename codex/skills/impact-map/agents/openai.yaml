@@ -1,0 +1,4 @@
+interface:
+  display_name: "Impact Map"
+  short_description: "Map likely impacted files and tests"
+  default_prompt: "Use $impact-map to scope the likely files, tests, and risks for this change."

@@ -1,0 +1,6 @@
+{
+  "name": "sample-shop-api",
+  "scripts": {
+    "test": "vitest run"
+  }
+}

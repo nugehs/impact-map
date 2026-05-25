@@ -1,0 +1,55 @@
+{
+  "skill_name": "impact-map",
+  "evals": [
+    {
+      "id": "scope-sample-shop-refunds",
+      "prompt": "Use $impact-map to scope adding Stripe refunds to the sample shop API at evals/files/sample-shop-api. Do not edit files; report likely files, tests, and risks.",
+      "expected_output": "A concise impact report or summary for the sample shop API that identifies likely implementation files, related files, tests, and payment/data risks while treating predictions as candidates.",
+      "files": [
+        "evals/files/sample-shop-api/package.json",
+        "evals/files/sample-shop-api/src/bookings/refunds.ts",
+        "evals/files/sample-shop-api/src/payments/stripe.ts",
+        "evals/files/sample-shop-api/tests/refunds.test.ts"
+      ],
+      "assertions": [
+        "The output identifies evals/files/sample-shop-api as the target repo and preserves the Stripe refunds request.",
+        "The output uses or reports a command with impact-map, cia, or the PYTHONPATH fallback CLI.",
+        "The output includes likely files or states why no strong file candidates were found.",
+        "The output includes likely tests or repo test commands to inspect or run.",
+        "The output calls out risks relevant to payment, booking, API contracts, database changes, or idempotency.",
+        "The output does not claim the candidates are confirmed changes before reading code or validating a diff.",
+        "The run does not edit files in the target repo."
+      ]
+    },
+    {
+      "id": "fallback-cli-sample-camera",
+      "prompt": "The impact-map command is not installed. Use $impact-map to scope fixing camera zoom controls in the sample mobile app at evals/files/sample-mobile-app.",
+      "expected_output": "A scoped impact report produced by the fallback command from an impact-map checkout using PYTHONPATH=src and the CLI module.",
+      "files": [
+        "evals/files/sample-mobile-app/package.json",
+        "evals/files/sample-mobile-app/app/camera.tsx",
+        "evals/files/sample-mobile-app/src/components/CameraControls.tsx",
+        "evals/files/sample-mobile-app/tests/camera.test.ts"
+      ],
+      "assertions": [
+        "The output uses the fallback command from an impact-map checkout with PYTHONPATH=src and change_impact_analyzer.cli.",
+        "The output includes evals/files/sample-mobile-app as the scanned repo.",
+        "The output includes camera or zoom candidate files, related files, or a clear explanation when the heuristic cannot find them.",
+        "The output includes suggested tests or smoke checks for camera behavior.",
+        "The output keeps the impact-map result framed as a first-pass investigation aid."
+      ]
+    },
+    {
+      "id": "validate-against-diff",
+      "prompt": "Use $impact-map to validate the current impact-map checkout diff for the request: add generic Codex skill evaluation coverage. Compare against HEAD and summarize confirmed, missed, and unconfirmed files.",
+      "expected_output": "A diff-aware validation summary using --diff-base HEAD that explains confirmed direct or related files, unconfirmed candidates, and any missed changed files.",
+      "assertions": [
+        "The output runs or reports impact-map with --diff-base HEAD.",
+        "The output explains confirmed_direct, confirmed_related, unconfirmed_candidates, or missed_changed_files in plain language.",
+        "The output mentions changed skill eval files when they exist in the diff.",
+        "The output flags missed_changed_files as a reason to inspect hidden coupling or update assumptions.",
+        "The output does not treat the validation as a substitute for code review."
+      ]
+    }
+  ]
+}
